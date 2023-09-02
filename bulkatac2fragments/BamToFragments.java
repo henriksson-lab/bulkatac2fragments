@@ -40,6 +40,12 @@ public class BamToFragments {
 			}
 			
 			String[] parts=line.split("\t", 0);
+			
+			if(parts.length<2) {
+				System.out.println(line);
+				throw new IOException("Unexpected input. Example line above");
+			}
+			
 			String readname=parts[3];
 			
 			//Remove trailing /1 or /2 for PE

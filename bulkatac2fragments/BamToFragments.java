@@ -73,8 +73,12 @@ public class BamToFragments {
 					int end=Math.max(Integer.parseInt(parts[2]), Integer.parseInt(otherRead[2]));
 					
 					//Deduplicate reads. Here ignoring the count, could be improved in the future
-					if(!chr1.equals(lastChr) && lastStart!=start && lastEnd!=end) {
+					if(!chr1.equals(lastChr) || lastStart!=start || lastEnd!=end) {
 						pw.println(chr1+"\t"+start+"\t"+end+"\t"+bc+"\t"+1);
+						
+						lastChr=chr1;
+						lastStart=start;
+						lastEnd=end;
 					}					
 				}
 				

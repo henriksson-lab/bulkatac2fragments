@@ -19,7 +19,12 @@ public class BamToFragments {
 
 		TreeMap<String, String[]> previousRead=new TreeMap<String, String[]>();
 
-		Process p = Runtime.getRuntime().exec("samtools view -bf 0x2 "+fBAM+" | bedtools bamtobed -i stdin");
+		String cmd[]= {
+				"sh", "-c",
+				"samtools view -bf 0x2 "+fBAM+" | bedtools bamtobed -i stdin"
+		};
+		
+		Process p = Runtime.getRuntime().exec(cmd);
 		BufferedReader inp = new BufferedReader( new InputStreamReader(p.getInputStream()) );
 
 		

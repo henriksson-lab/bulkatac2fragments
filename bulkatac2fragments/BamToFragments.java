@@ -191,10 +191,13 @@ public class BamToFragments {
 		
 		for(File f:finList) {
 			PrioritizedReader r=new PrioritizedReader(f);
-			if(r.readLine())
+			if(r.readLine()) {
 				q.add(r);
+				System.out.println("Including "+f);
+			}
 		}
 		
+		System.out.println("Merging all");
 		int readRecords=0;
 		while(!q.isEmpty()) {
 			PrioritizedReader r=q.poll();
@@ -208,6 +211,9 @@ public class BamToFragments {
 			}
 
 		}
+		
+		System.out.println("done");
+
 		
 	}
 

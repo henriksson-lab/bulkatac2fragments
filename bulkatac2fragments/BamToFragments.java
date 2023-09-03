@@ -4,15 +4,26 @@ package bulkatac2fragments;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.TreeMap;
 
 
 public class BamToFragments {
 	
+	//Note. this is broken. need to postpone writing until pair found
+	
+	//One priority queue? to keep R1. https://docs.oracle.com/javase/8/docs/api/java/util/PriorityQueue.html
+	//Constant time to check if paired read in there
+	//Take first item to check safe position
+	//If first item too far away then drop it. add a warning read to set. drop R2 when it appears
+	
+	//Put outgoing in a queue. output while still safe to do so
 	
 	
 	public static void read(File fBAM, String bc, PrintWriter pw) throws IOException {
@@ -94,44 +105,109 @@ public class BamToFragments {
 	
 	
 	
-	
+	public static void printHelp() {
+		System.out.println("This software takes paired-end ATAC-seq files and generes 10x-like fragment files.");
+		System.out.println("Thus they can be analyzed using single-cell workflows (such as signac or archr)");
+		System.out.println();
+		System.out.println("java -jar bam2fragments.jar bam2bed input.bam [-o output.tsv] [-b barcode_to_write]]");
+		System.out.println("java -jar bam2fragments.jar mergebed atac_fragments.tsv *.tsv");
+		System.out.println();
+		//System.out.println("Later merge all files using: bedtools merge -i *.atac_fragments.tsv > atac_fragments.tsv");
+		System.out.println("Compress it: bgzip -@ 8 -i atac_fragments.tsv");
+		//System.out.println("Index it: tabix -p vcf atac_fragments.tsv.gz");
+		System.exit(0);
+	}
 	
 	
 	public static void main(String[] args) {
 
 		if(args.length==0) {
-			System.out.println("This software takes paired-end ATAC-seq files and generes 10x-like fragment files.");
-			System.out.println("Thus they can be analyzed using single-cell workflows (such as signac or archr)");
-			System.out.println();
-			System.out.println("Arguments: input.bam [output.tsv [barcode_to_write]]");
-			System.out.println();
-			System.out.println("Later merge all files using: bedtools merge -i *.atac_fragments.tsv > atac_fragments.tsv");
-			System.out.println("Compress it: bgzip -@ 8 -i atac_fragments.tsv");
-			//System.out.println("Index it: tabix -p vcf atac_fragments.tsv.gz");
+			printHelp();
+		}
+		
+		if(args[0].equals("bam2bed") && args.length>1) {
+			
+			File fin=new File(args[1]);
+			File fout=new File(fin.getParentFile(), fin.getName()+".atac_fragments.tsv");
+			String bc=fin.getName();
+			
+			for(int i=2;i<args.length;i++) {
+				if(args[i].equals("-o")) {
+					fout=new File(args[i+1]);
+					i++;
+				} else if(args[i].equals("-b")) {
+					bc=args[i+1];		
+					i++;
+				} else {
+					System.out.println("Parse error on "+args[i]);
+					System.exit(0);
+				}
+			}
+			
+			try {
+				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(fout)));
+				
+				read(fin, bc, pw);
+				
+				pw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		} else if(args[0].equals("mergebed") && args.length>1) {
+			
+			File fout=new File(args[1]);
+			
+			LinkedList<File> finList=new LinkedList<File>();
+			
+			for(int i=2;i<args.length;i++) {
+				finList.add(new File(args[i]));
+			}
+
+			
+			try {
+				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(fout)));
+				
+				merge(pw, finList);
+				
+				pw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		} else {
+			System.out.println("Parse error on "+args[0]);
 			System.exit(0);
 		}
 		
 		
-		File fin=new File(args[0]);
 		
-		File fout=new File(args[0]+".atac_fragments.tsv");
-		if(args.length>1)
-			fout=new File(args[1]);
+	}
+
+
+	private static void merge(PrintWriter pw, LinkedList<File> finList) throws IOException {
 		
-		String bc=fin.getName();
-		if(args.length>2)
-			bc=args[2];		
+		PriorityQueue<PrioritizedReader> q=new PriorityQueue<PrioritizedReader>();
 		
-		try {
-			PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(fout)));
-			
-			read(fin, bc, pw);
-			
-			pw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		for(File f:finList) {
+			PrioritizedReader r=new PrioritizedReader(f);
+			if(r.readLine())
+				q.add(r);
 		}
 		
+		int readRecords=0;
+		while(!q.isEmpty()) {
+			PrioritizedReader r=q.poll();
+			pw.println(r.line);
+			if(r.readLine())
+				q.add(r);
+			readRecords++;
+			if(readRecords%1000000 == 0){
+				//Calculate progress
+				System.out.println("records so far: "+readRecords+"    num files still going: "+q.size());
+			}
+
+		}
 		
 	}
 

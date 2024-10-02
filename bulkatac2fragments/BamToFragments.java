@@ -179,17 +179,17 @@ public class BamToFragments {
 			
 			File fout=new File(args[1]);
 			
-			LinkedList<File> finList=new LinkedList<File>();
+			LinkedList<String> finList=new LinkedList<String>();
 			
 			for(int i=2;i<args.length;i++) {
-				finList.add(new File(args[i]));
+				finList.add(args[i]);
 			}
 
 			
 			try {
 				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(fout)));
 				
-				merge(pw, finList);
+				NewMergeBed.merge(finList, new PrintWriter(new BufferedWriter(pw)));
 				
 				pw.close();
 			} catch (IOException e) {

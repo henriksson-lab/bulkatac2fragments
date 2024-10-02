@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.StringTokenizer;
@@ -96,7 +97,7 @@ public class NewMergeBed {
 	
 	
 	
-	public static void merge(List<String> args, PrintStream ps) throws IOException {
+	public static void merge(List<String> args, PrintWriter ps) throws IOException {
 		
 
 		int numline=0;
@@ -120,7 +121,7 @@ public class NewMergeBed {
 			numline++;
 			
 			if(numline%1000000==0) {
-				System.out.println("numline "+numline);
+				System.out.println("numline "+numline+ "  current files "+q.size());
 			}
 		}
 		

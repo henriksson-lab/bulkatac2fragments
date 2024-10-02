@@ -175,6 +175,26 @@ public class BamToFragments {
 				e.printStackTrace();
 			}
 			
+		} else if(args[0].equals("newmergebed") && args.length>1) {
+			
+			File fout=new File(args[1]);
+			
+			LinkedList<File> finList=new LinkedList<File>();
+			
+			for(int i=2;i<args.length;i++) {
+				finList.add(new File(args[i]));
+			}
+
+			
+			try {
+				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(fout)));
+				
+				merge(pw, finList);
+				
+				pw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
 			System.out.println("Parse error on "+args[0]);
 			System.exit(0);
